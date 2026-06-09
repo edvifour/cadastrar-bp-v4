@@ -597,28 +597,118 @@ function splitName(full) {
 
 // ─── Montar payload completo ─────────────────────────────
 function buildPayload(row) {
-  const meta = sapMeta(row.cnpj_cpf);
-  const { first_name, last_name } = splitName(row.full_name);
+  const doc     = limpar(row.cnpj_cpf);
+  const isCNPJ  = doc.length === 14;
+  const taxType = isCNPJ ? 'BR3' : 'BR1';
+  const phone   = row.phone ? '+55' + limpar(row.phone) : null;
+  const cep     = limpar(row.zip_code || '');
+  const taxJur  = (row._ibge && row.state) ? (row.state + ' ' + row._ibge) : '';
+
   return {
-    company_code:      S.empresa,
-    document_number:   null,
-    cnpj_cpf:          row.cnpj_cpf,                // só números
-    full_name:         row.full_name || '',
-    first_name:        first_name,
-    last_name:         last_name,
-    sap_category:      meta.sap_category,
-    sap_tax_type:      meta.sap_tax_type,
-    email:             row.email    || null,
-    phone_full:        row.phone    || null,
-    zip_code:          row.zip_code || null,
-    street:            row.street   || null,
-    house_number:      row.house_number || 'S/N',
-    neighborhood:      row.neighborhood || null,
-    city:              row.city     || null,
-    state:             row.state    || null,
-    country:           'BR',
-    source_id:         null,
-    address_is_fallback: row._addr_fallback || false,
+    BusinessPartnerCategory: isCNPJ ? '2' : '1',
+    BusinessPartnerGrouping: '0001',
+    OrganizationBPName1:     row.full_name || '',
+    SearchTerm1:             String(doc.length),        // 14=CNPJ / 11=CPF
+    SearchTerm2:             doc,
+    to_BusinessPartnerAddress: {
+      results: [{
+        AddressTimeZone:           'BRZLEA',
+        CityName:                  row.city          || '',
+        Country:                   'BR',
+        District:                  row.neighborhood  || '',
+        HouseNumber:               row.house_number  || 'S/N',
+        HouseNumberSupplementText: '',
+        Language:                  'PT',
+        PostalCode:                cep,
+        Region:                    row.state         || '',
+        StreetName:                row.street        || '',
+        StreetPrefixName:          null,
+        TaxJurisdiction:           taxJur,
+        to_EmailAddress: {
+          results: row.email ? [{
+            EmailAddress:          row.email,
+            IsDefaultEmailAddress: true,
+            OrdinalNumber:         '1',
+          }] : [],
+        },
+        to_MobilePhoneNumber: {
+          results: phone ? [{
+            DestinationLocationCountry: 'BR',
+            IsDefaultPhoneNumber:       true,
+            OrdinalNumber:              '1',
+            PhoneNumber:                phone,
+            PhoneNumberType:            '1',
+          }] : [],
+        },
+        to_PhoneNumber: {
+          results: phone ? [{
+            DestinationLocationCountry: 'BR',
+            IsDefaultPhoneNumber:       true,
+            OrdinalNumber:              '1',
+            PhoneNumber:                phone,
+            PhoneNumberType:            '1',
+          }] : [],
+        },
+      }],
+    },
+    to_BusinessPartnerRole: {
+      results: [
+        { BusinessPartnerRole: '000000' },
+        { BusinessPartnerRole: 'FLCU00' },
+        { BusinessPartnerRole: 'FLCU01' },
+      ],
+    },
+    to_BusinessPartnerTax: {
+      results: [{ BPTaxNumber: doc, BPTaxType: taxType }],
+    },
+    to_Customer: {
+      CustomerAccountGroup:    'DEBI',
+      DeletionIndicator:       false,
+      PostingIsBlocked:        false,
+      to_CustomerCompany: {
+        results: [{
+          CashPlanningGroup:                'E2',
+          CompanyCode:                      S.empresa,
+          CustomerAccountGroup:             'DEBI',
+          CustomerSupplierClearingIsUsed:   false,
+          DeletionIndicator:                false,
+          InterestCalculationDate:          null,
+          IsToBeLocallyProcessed:           false,
+          ItemIsToBePaidSeparately:         false,
+          PaytAdviceIsSentbyEDI:            false,
+          PhysicalInventoryBlockInd:        false,
+          ReconciliationAccount:            '12100000',
+          RecordPaymentHistoryIndicator:    false,
+        }],
+      },
+      to_CustomerSalesArea: {
+        results: [{
+          CompleteDeliveryIsDefined:        false,
+          Currency:                         'BRL',
+          CustomerAccountAssignmentGroup:   '01',
+          CustomerAccountGroup:             'DEBI',
+          CustomerPriceGroup:               '01',
+          CustomerPricingProcedure:         '01',
+          DeletionIndicator:                false,
+          DistributionChannel:              '10',
+          Division:                         '10',
+          OrderCombinationIsAllowed:        false,
+          SalesDistrict:                    'BR0002',
+          SalesOrganization:                S.empresa,
+          to_PartnerFunction:               { results: [] },
+          to_SalesAreaTax: {
+            results: [{
+              CustomerTaxCategory:       'IBRX',
+              CustomerTaxClassification: '1',
+              DepartureCountry:          'BR',
+              DistributionChannel:       '10',
+              Division:                  '10',
+              SalesOrganization:         S.empresa,
+            }],
+          },
+        }],
+      },
+    },
   };
 }
 
@@ -898,12 +988,25 @@ function updateStats() {
 // ═══════════════════════════════════════════════════════════
 // RECEITA — BrasilAPI
 // ═══════════════════════════════════════════════════════════
+async function buscarIBGE(cep) {
+  try {
+    const d = limpar(cep);
+    if (d.length !== 8) return null;
+    const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${d}`);
+    if (!res.ok) return null;
+    const j = await res.json();
+    return j.ibge || null;
+  } catch { return null; }
+}
+
 async function consultarReceita(doc) {
   const d = limpar(doc);
   if (d.length === 14) {
     const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${d}`);
     if (!res.ok) throw new Error('CNPJ não encontrado (HTTP '+res.status+')');
     const j = await res.json();
+    const cepLimpo = limpar(j.cep||'');
+    const ibge = await buscarIBGE(cepLimpo);
     return {
       full_name:    j.razao_social || '',
       street:       j.logradouro   || '',
@@ -911,20 +1014,23 @@ async function consultarReceita(doc) {
       neighborhood: j.bairro       || '',
       city:         j.municipio    || '',
       state:        j.uf           || '',
-      zip_code:     fmtCEP(limpar(j.cep||'')),
+      zip_code:     fmtCEP(cepLimpo),
       phone:        limpar(j.ddd_telefone_1||'') || null,
-      _cpf: false,
+      ibge:         ibge,
+      _cpf:         false,
     };
   } else if (d.length === 11) {
-    // CPF — sem API pública; aplica endereço padrão V4
+    // CPF — endereço padrão V4 + IBGE de Campinas
+    const ibge = await buscarIBGE('13054709');
     return {
-      street: 'R SERGIO FERNANDES BORGES SOARES',
+      street:       'R SERGIO FERNANDES BORGES SOARES',
       house_number: '1000',
       neighborhood: '',
-      city: 'CAMPINAS',
-      state: 'SP',
-      zip_code: '13054-709',
-      _cpf: true,
+      city:         'CAMPINAS',
+      state:        'SP',
+      zip_code:     '13054-709',
+      ibge:         ibge || '3509502',
+      _cpf:         true,
     };
   } else {
     throw new Error('Documento inválido ('+d.length+' dígitos)');
@@ -954,6 +1060,7 @@ async function validateAll() {
         if (!row.city)         row.city         = d.city;
         if (!row.state)        row.state        = d.state;
         if (!row.zip_code || limpar(row.zip_code).length<8) row.zip_code = d.zip_code;
+        if (d.ibge) row._ibge = d.ibge;
         row._addr_fallback = true;
         row._receita = 'ok';
         log(`✓ #${row.idx} ${row.full_name} — CPF, endereço padrão V4 aplicado`, 'ok');
@@ -966,6 +1073,7 @@ async function validateAll() {
         if (!row.state)        row.state        = d.state;
         if (!row.zip_code || limpar(row.zip_code).length<8) row.zip_code = d.zip_code;
         if (!row.phone)        row.phone        = d.phone;
+        if (d.ibge) row._ibge = d.ibge;
         row._addr_fallback = false;
         row._receita = 'ok';
         log(`✓ #${row.idx} ${row.full_name} (${fmtDoc(row.cnpj_cpf)}) — validado`, 'ok');

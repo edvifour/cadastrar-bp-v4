@@ -601,7 +601,7 @@ function buildPayload(row) {
   const isCNPJ  = doc.length === 14;
   const taxType = isCNPJ ? 'BR3' : 'BR1';
   const phone   = row.phone ? '+55' + limpar(row.phone) : null;
-  const cep     = limpar(row.zip_code || '');
+  const cep     = fmtCEP(limpar(row.zip_code || ''));  // formato XXXXX-XXX exigido pelo SAP
   const taxJur  = (row._ibge && row.state) ? (row.state + ' ' + row._ibge) : '';
 
   return {

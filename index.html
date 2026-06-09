@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cadastrar BP — V4 Company</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #1a1a1a;
+    --surface: #262626;
+    --surface2: #333333;
+    --border: #3a3a3a;
+    --border-hover: #555;
+    --accent: #e50914;
+    --accent-dark: #b20710;
+    --accent-dim: rgba(229,9,20,0.12);
+    --accent-dim2: rgba(229,9,20,0.06);
+    --text: #ffffff;
+    --text-muted: #666;
+    --text-mid: #999;
+    --green: #52cc5a;
+    --green-dim: rgba(82,204,90,0.12);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.10);
+    --yellow: #ffc02a;
+    --yellow-dim: rgba(255,192,42,0.12);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.10);
+    --mono: 'DM Mono', monospace;
+    --sans: 'Montserrat', sans-serif;
+    --radius: 6px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ── HEADER ─────────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 13px; font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .logo-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
+  .logo-sub { color: var(--text-muted); }
+
+  .header-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 11px; color: var(--text-muted);
+  }
+
+  .chip {
+    padding: 2px 8px; border-radius: 4px; font-size: 11px;
+    font-family: var(--mono); font-weight: 500;
+  }
+  .chip-accent { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(229,9,20,0.30); }
+  .chip-muted  { background: var(--surface2); color: var(--text-mid); border: 1px solid var(--border); }
+
+  /* ── MAIN ───────────────────────────────────── */
+  main { max-width: 1140px; margin: 0 auto; padding: 36px 32px 80px; }
+
+  /* ── STEPS ──────────────────────────────────── */
+  .steps {
+    display: flex; margin-bottom: 40px;
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  }
+
+  .step {
+    flex: 1; padding: 14px 18px; border-right: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0.28; transition: opacity .2s, background .2s;
+  }
+  .step:last-child { border-right: none; }
+  .step.active  { opacity: 1; background: var(--accent-dim2); }
+  .step.done    { opacity: 0.55; }
+
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1px solid var(--border-hover);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+    flex-shrink: 0; transition: all .2s;
+  }
+  .step.active .step-num { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  .step.done   .step-num { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+  .step-label { font-size: 12px; font-weight: 500; color: var(--text-mid); }
+  .step.active .step-label { color: var(--text); }
+
+  /* ── PANEL ──────────────────────────────────── */
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; margin-bottom: 14px;
+  }
+
+  .panel-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+
+  .panel-title {
+    font-size: 13px; font-weight: 600; letter-spacing: .02em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-title::before {
+    content: ''; display: block; width: 5px; height: 5px;
+    background: var(--accent); border-radius: 50%; flex-shrink: 0;
+  }
+
+  .panel-body { padding: 22px; }
+
+  /* ── FORM FIELDS ────────────────────────────── */
+  .field-group { margin-bottom: 18px; }
+  .field-label {
+    display: block; font-size: 10px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+  }
+
+  .select-custom, .input-custom {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); padding: 9px 12px;
+    font-family: var(--sans); font-size: 13px; appearance: none;
+    cursor: pointer; outline: none; transition: border-color .2s;
+  }
+  .select-custom:focus, .input-custom:focus { border-color: var(--accent); }
+  .input-custom { cursor: text; }
+
+  /* ── DROPZONE ───────────────────────────────── */
+  .dropzone {
+    border: 1px dashed var(--border-hover); border-radius: var(--radius);
+    padding: 44px 24px; text-align: center; cursor: pointer;
+    transition: all .2s; background: var(--surface2); position: relative;
+  }
+  .dropzone:hover, .dropzone.drag-over {
+    border-color: var(--accent); background: var(--accent-dim2);
+  }
+  .dropzone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .dropzone-icon { font-size: 26px; margin-bottom: 10px; display: block; }
+  .dropzone-label { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .dropzone-sub { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+
+  /* ── STATS ──────────────────────────────────── */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+    gap: 10px; padding: 18px 22px 0;
+  }
+
+  .stat-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px;
+  }
+  .stat-value {
+    font-family: var(--mono); font-size: 22px; font-weight: 500;
+    line-height: 1; margin-bottom: 3px;
+  }
+  .stat-label { font-size: 10px; color: var(--text-muted); letter-spacing: .07em; text-transform: uppercase; }
+
+  .stat-total .stat-value { color: var(--text); }
+  .stat-ok    .stat-value { color: var(--green); }
+  .stat-err   .stat-value { color: var(--red); }
+  .stat-pend  .stat-value { color: var(--yellow); }
+
+  /* ── PROGRESS ───────────────────────────────── */
+  .progress-outer { padding: 14px 22px 0; }
+  .progress-track {
+    background: var(--surface2); border-radius: 4px; height: 3px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent); border-radius: 4px;
+    transition: width .25s; width: 0%;
+  }
+  .progress-label {
+    font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 5px;
+  }
+
+  /* ── TABLE ──────────────────────────────────── */
+  .table-scroll { overflow-x: auto; padding: 14px 22px; }
+
+  .table-wrap { border: 1px solid var(--border); border-radius: var(--radius); }
+
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11.5px; }
+
+  thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
+  th {
+    padding: 9px 11px; text-align: left; font-size: 9.5px; font-weight: 600;
+    color: var(--text-muted); letter-spacing: .09em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 11px; border-bottom: 1px solid var(--border);
+    color: var(--text); max-width: 180px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+  /* ── STATUS BADGE ───────────────────────────── */
+  .sbadge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 600;
+    white-space: nowrap; letter-spacing: .03em;
+  }
+  .sb-pending { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+  .sb-loading { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(251,191,36,.2); }
+  .sb-ok      { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(74,222,128,.2); }
+  .sb-error   { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(248,113,113,.2); }
+  .sb-sap-ok  { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(96,165,250,.2); }
+  .sb-sap-err { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(248,113,113,.2); }
+
+  /* ── BUTTONS ────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px; border-radius: var(--radius);
+    font-family: var(--sans); font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; transition: all .15s; white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.28; cursor: not-allowed; pointer-events: none; }
+
+  .btn-primary { background: var(--accent); color: #fff; font-weight: 600; }
+  .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent; color: var(--text-mid);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); background: var(--surface2); }
+
+  .btn-sap {
+    background: var(--blue-dim); color: var(--blue);
+    border: 1px solid rgba(96,165,250,.2);
+  }
+  .btn-sap:hover { background: rgba(96,165,250,.18); }
+
+  .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  /* ── ALERT ──────────────────────────────────── */
+  .alert {
+    padding: 11px 14px; border-radius: var(--radius); font-size: 12.5px;
+    display: flex; align-items: flex-start; gap: 9px; margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .alert-info    { background: var(--accent-dim); border: 1px solid rgba(229,9,20,.25); color: var(--accent); }
+  .alert-warning { background: var(--yellow-dim); border: 1px solid rgba(251,191,36,.2);  color: var(--yellow); }
+  .alert-success { background: var(--green-dim);  border: 1px solid rgba(74,222,128,.2);  color: var(--green); }
+  .alert-error   { background: var(--red-dim);    border: 1px solid rgba(248,113,113,.2); color: var(--red); }
+
+  /* ── LOG ────────────────────────────────────── */
+  .log {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px; font-family: var(--mono);
+    font-size: 11.5px; max-height: 200px; overflow-y: auto;
+    color: var(--text-mid); margin-bottom: 18px;
+  }
+  .log-line { margin-bottom: 3px; line-height: 1.6; }
+  .log-line.ok   { color: var(--green); }
+  .log-line.err  { color: var(--red); }
+  .log-line.info { color: var(--accent); }
+  .log-line.sap  { color: var(--blue); }
+
+  /* ── API CONFIG ─────────────────────────────── */
+  .config-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  @media (max-width: 600px) { .config-grid { grid-template-columns: 1fr; } }
+
+  /* ── MISC ───────────────────────────────────── */
+  .hidden { display: none !important; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin .7s linear infinite; display: inline-block; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
+
+  .empty-state {
+    text-align: center; padding: 48px; color: var(--text-muted); font-size: 13px;
+  }
+  .empty-state span { display: block; font-size: 26px; margin-bottom: 8px; }
+
+  /* payload preview */
+  .payload-preview {
+    background: #0a0a0a; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px 14px; font-family: var(--mono); font-size: 11px;
+    color: var(--text-mid); max-height: 200px; overflow-y: auto;
+    white-space: pre; margin-top: 12px;
+  }
+
+  /* collapsible config */
+  .config-toggle {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 12px; color: var(--text-muted); user-select: none;
+    padding: 8px 0;
+  }
+  .config-toggle:hover { color: var(--text-mid); }
+  .config-toggle .arrow { transition: transform .2s; font-size: 10px; }
+  .config-toggle.open .arrow { transform: rotate(90deg); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span>cadastrar-bp</span>
+    <span class="logo-sub">/ v4 company</span>
+  </div>
+  <div class="header-meta">
+    <span id="hdr-count" class="chip chip-muted hidden"></span>
+    <span id="hdr-empresa" class="chip chip-accent">1410</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step active" id="step-1"><div class="step-num">1</div><div class="step-label">Importar</div></div>
+    <div class="step"        id="step-2"><div class="step-num">2</div><div class="step-label">Validar Receita</div></div>
+    <div class="step"        id="step-3"><div class="step-num">3</div><div class="step-label">Cadastrar SAP</div></div>
+    <div class="step"        id="step-4"><div class="step-num">4</div><div class="step-label">Exportar</div></div>
+  </div>
+
+  <!-- ── PANEL: IMPORT ── -->
+  <div class="panel" id="panel-import">
+    <div class="panel-header">
+      <div class="panel-title">Adicionar BPs</div>
+    </div>
+    <div class="panel-body">
+
+      <div class="field-group">
+        <label class="field-label">Empresa destino (company_code)</label>
+        <select class="select-custom" id="empresa-select">
+          <option value="1410">V4 Company — 1410</option>
+        </select>
+      </div>
+
+      <!-- Tabs: Planilha / Manual -->
+      <div style="display:flex; gap:0; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px;">
+        <button id="tab-planilha" onclick="switchTab('planilha')" style="flex:1;padding:9px 16px;background:var(--accent);color:#fff;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;">
+          📄 Via planilha
+        </button>
+        <button id="tab-manual" onclick="switchTab('manual')" style="flex:1;padding:9px 16px;background:transparent;color:var(--text-mid);border:none;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;">
+          ✏️ Entrada manual
+        </button>
+      </div>
+
+      <!-- TAB: PLANILHA -->
+      <div id="tab-body-planilha">
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file-input" accept=".xlsx,.xls"/>
+          <span class="dropzone-icon">📄</span>
+          <div class="dropzone-label">Arraste o arquivo ou clique para selecionar</div>
+          <div class="dropzone-sub">BPs_Criar_*.xlsx — aba BPs_Cadastro</div>
+        </div>
+        <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+          <button class="btn btn-ghost" id="btn-modelo" style="font-size:12px; padding: 7px 13px;">
+            ⬇ Baixar planilha modelo
+          </button>
+          <span style="font-family:var(--mono); font-size:11px; color:var(--text-muted);">
+            BPs_Cadastro com cabeçalho + exemplos
+          </span>
+        </div>
+      </div>
+
+      <!-- TAB: MANUAL -->
+      <div id="tab-body-manual" class="hidden">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label class="field-label">CPF / CNPJ <span style="color:var(--red)">*</span></label>
+            <input class="input-custom" id="m-doc" type="text" placeholder="Só números ou com formatação"
+              style="font-family:var(--mono);"
+              onkeydown="if(event.key==='Enter') buscarReceita()"/>
+          </div>
+          <div>
+            <label class="field-label">Nome completo <span style="color:var(--red)">*</span></label>
+            <input class="input-custom" id="m-nome" type="text" placeholder="Razão social ou nome"/>
+          </div>
+          <div>
+            <label class="field-label">E-mail</label>
+            <input class="input-custom" id="m-email" type="email" placeholder="email@empresa.com.br"/>
+          </div>
+          <div>
+            <label class="field-label">Telefone</label>
+            <input class="input-custom" id="m-phone" type="text" placeholder="11999998888"/>
+          </div>
+          <div>
+            <label class="field-label">CEP</label>
+            <input class="input-custom" id="m-cep" type="text" placeholder="00000-000"/>
+          </div>
+          <div>
+            <label class="field-label">Número</label>
+            <input class="input-custom" id="m-num" type="text" placeholder="S/N"/>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label class="field-label">Rua / Logradouro</label>
+            <input class="input-custom" id="m-rua" type="text" placeholder="Preenchido automaticamente para CNPJ"/>
+          </div>
+          <div>
+            <label class="field-label">Bairro</label>
+            <input class="input-custom" id="m-bairro" type="text" placeholder=""/>
+          </div>
+          <div>
+            <label class="field-label">Cidade</label>
+            <input class="input-custom" id="m-cidade" type="text" placeholder=""/>
+          </div>
+          <div>
+            <label class="field-label">UF</label>
+            <input class="input-custom" id="m-uf" type="text" placeholder="SP" maxlength="2" style="text-transform:uppercase;"/>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <button class="btn btn-ghost" id="btn-buscar-receita" onclick="buscarReceita()" style="font-size:12px; padding:7px 13px;">
+            🔎 Buscar na Receita Federal
+          </button>
+          <button class="btn btn-primary" id="btn-add-manual" onclick="adicionarManual()">
+            + Adicionar BP
+          </button>
+          <span id="manual-status" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);"></span>
+        </div>
+        <div id="manual-alert" class="hidden" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Status API SAP -->
+      <div style="margin-top: 20px; display:flex; align-items:center; gap:10px;">
+        <span id="api-status-dot" style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;"></span>
+        <span id="api-status-label" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);">verificando conexão com SAP...</span>
+        <button class="btn btn-ghost" id="btn-test-api" style="font-size:11px;padding:4px 10px;margin-left:auto;">↺ Reconectar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PANEL: TABELA ── -->
+  <div class="panel hidden" id="panel-table">
+    <div class="panel-header">
+      <div class="panel-title" id="table-title">BPs importados</div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btn-reset" style="font-size:12px; padding:7px 13px;">↩ Reimportar</button>
+        <button class="btn btn-primary" id="btn-validate">🔎 Validar todos na Receita</button>
+      </div>
+    </div>
+
+    <!-- stats -->
+    <div class="stats-row hidden" id="stats-wrap">
+      <div class="stat-card stat-total"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-card stat-ok">  <div class="stat-value" id="stat-ok">0</div>   <div class="stat-label">Validados ✓</div></div>
+      <div class="stat-card stat-err"> <div class="stat-value" id="stat-err">0</div>  <div class="stat-label">Com erro</div></div>
+      <div class="stat-card stat-pend"><div class="stat-value" id="stat-pend">0</div> <div class="stat-label">Pendentes</div></div>
+    </div>
+
+    <!-- progress -->
+    <div class="progress-outer hidden" id="progress-outer">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-label" id="progress-label"></div>
+    </div>
+
+    <!-- table -->
+    <div class="table-scroll">
+      <div class="table-wrap">
+        <table id="bp-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Documento</th>
+              <th>Nome completo</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+              <th>CEP</th>
+              <th>Rua</th>
+              <th>Nº</th>
+              <th>Bairro</th>
+              <th>Cidade</th>
+              <th>UF</th>
+              <th>Tipo</th>
+              <th>Receita</th>
+              <th>SAP</th>
+            </tr>
+          </thead>
+          <tbody id="bp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PANEL: SAP ── -->
+  <div class="panel hidden" id="panel-sap">
+    <div class="panel-header">
+      <div class="panel-title">Cadastrar no SAP</div>
+      <div class="btn-row">
+        <button class="btn btn-sap" id="btn-cadastrar" disabled>🚀 Cadastrar todos no SAP</button>
+        <button class="btn btn-ghost" id="btn-export-csv">⬇ Exportar CSV</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div id="log" class="log"></div>
+      <div id="alert-no-api" class="alert alert-warning">
+        <span>⚠️</span>
+        <div>
+          <strong>Sem conexão com o SAP.</strong> Verifique se o backend está no ar e clique em "Reconectar" na tela de importação.
+        </div>
+      </div>
+      <div id="alert-api-ok" class="alert alert-success hidden">
+        <span>✅</span>
+        <div>
+          <strong>API conectada.</strong> Clique em <strong>Cadastrar todos no SAP</strong> para enviar os BPs validados.
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:4px;">
+        <button class="btn btn-ghost" id="btn-new">↩ Nova importação</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const S = {
+  rows: [],
+  empresa: '1410',
+  apiUrl: 'https://cadastrar-business-partner.onrender.com/cadastrar-bp',
+  apiToken: '',
+  apiOk: false,
+  validating: false,
+  cadastrando: false,
+};
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+const limpar = v => String(v||'').replace(/\D/g,'');
+
+function fmtDoc(v) {
+  const d = limpar(v);
+  if (d.length===11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+  if (d.length===14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
+  return v||'';
+}
+
+function fmtCEP(v) {
+  const d = limpar(v);
+  return d.length===8 ? d.slice(0,5)+'-'+d.slice(5) : (v||'');
+}
+
+const sleep = ms => new Promise(r => setTimeout(r,ms));
+
+function today() {
+  return new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+}
+
+function isCNPJ(doc) { return limpar(doc).length === 14; }
+function isCPF(doc)  { return limpar(doc).length === 11; }
+
+// ─── Derivar sap_category e sap_tax_type ────────────────
+function sapMeta(doc) {
+  if (isCNPJ(doc)) return { sap_category: 'J', sap_tax_type: 'BR3' };  // Pessoa Jurídica
+  if (isCPF(doc))  return { sap_category: 'F', sap_tax_type: 'BR1' };  // Pessoa Física
+  return { sap_category: null, sap_tax_type: null };
+}
+
+// ─── Montar first/last name ──────────────────────────────
+function splitName(full) {
+  const parts = (full||'').trim().split(/\s+/);
+  if (parts.length === 0) return { first_name: null, last_name: null };
+  const first = parts[0];
+  const last  = parts.length > 1 ? parts.slice(1).join(' ') : null;
+  return { first_name: first, last_name: last };
+}
+
+// ─── Montar payload completo ─────────────────────────────
+function buildPayload(row) {
+  const meta = sapMeta(row.cnpj_cpf);
+  const { first_name, last_name } = splitName(row.full_name);
+  return {
+    company_code:      S.empresa,
+    document_number:   null,
+    cnpj_cpf:          row.cnpj_cpf,                // só números
+    full_name:         row.full_name || '',
+    first_name:        first_name,
+    last_name:         last_name,
+    sap_category:      meta.sap_category,
+    sap_tax_type:      meta.sap_tax_type,
+    email:             row.email    || null,
+    phone_full:        row.phone    || null,
+    zip_code:          row.zip_code || null,
+    street:            row.street   || null,
+    house_number:      row.house_number || 'S/N',
+    neighborhood:      row.neighborhood || null,
+    city:              row.city     || null,
+    state:             row.state    || null,
+    country:           'BR',
+    source_id:         null,
+    address_is_fallback: row._addr_fallback || false,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════
+function switchTab(tab) {
+  const isPlanilha = tab === 'planilha';
+  document.getElementById('tab-body-planilha').classList.toggle('hidden', !isPlanilha);
+  document.getElementById('tab-body-manual').classList.toggle('hidden', isPlanilha);
+  document.getElementById('tab-planilha').style.background = isPlanilha ? 'var(--accent)' : 'transparent';
+  document.getElementById('tab-planilha').style.color      = isPlanilha ? '#fff' : 'var(--text-mid)';
+  document.getElementById('tab-planilha').style.fontWeight = isPlanilha ? '600' : '500';
+  document.getElementById('tab-manual').style.background   = !isPlanilha ? 'var(--accent)' : 'transparent';
+  document.getElementById('tab-manual').style.color        = !isPlanilha ? '#fff' : 'var(--text-mid)';
+  document.getElementById('tab-manual').style.fontWeight   = !isPlanilha ? '600' : '500';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ENTRADA MANUAL
+// ═══════════════════════════════════════════════════════════
+function setManualStatus(msg, type='') {
+  const el = document.getElementById('manual-status');
+  el.textContent = msg;
+  el.style.color = type==='ok' ? 'var(--green)' : type==='err' ? 'var(--red)' : 'var(--text-muted)';
+}
+
+function setManualAlert(msg, type='info') {
+  const el = document.getElementById('manual-alert');
+  const colors = { info:'alert-info', ok:'alert-success', err:'alert-error', warn:'alert-warning' };
+  el.className = 'alert ' + (colors[type]||'alert-info');
+  el.innerHTML = msg;
+  el.classList.remove('hidden');
+}
+
+function clearManualFields() {
+  ['m-doc','m-nome','m-email','m-phone','m-cep','m-num','m-rua','m-bairro','m-cidade','m-uf']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('manual-alert').classList.add('hidden');
+  setManualStatus('');
+}
+
+async function buscarReceita() {
+  const doc = limpar(document.getElementById('m-doc').value);
+  if (!doc) { setManualStatus('Informe o CPF ou CNPJ', 'err'); return; }
+
+  const btn = document.getElementById('btn-buscar-receita');
+  btn.innerHTML = '<span class="spin">⟳</span> Buscando...';
+  btn.disabled = true;
+  setManualStatus('consultando Receita Federal...', '');
+  document.getElementById('manual-alert').classList.add('hidden');
+
+  try {
+    const d = await consultarReceita(doc);
+    if (d._cpf) {
+      setManualAlert('✓ CPF reconhecido. Endereço padrão V4 pré-preenchido — ajuste se necessário.', 'ok');
+      if (!document.getElementById('m-rua').value)    document.getElementById('m-rua').value    = d.street;
+      if (!document.getElementById('m-num').value)    document.getElementById('m-num').value    = d.house_number;
+      if (!document.getElementById('m-cidade').value) document.getElementById('m-cidade').value = d.city;
+      if (!document.getElementById('m-uf').value)     document.getElementById('m-uf').value     = d.state;
+      if (!document.getElementById('m-cep').value)    document.getElementById('m-cep').value    = d.zip_code;
+    } else {
+      setManualAlert(`✓ CNPJ encontrado: <strong>${d.full_name}</strong>`, 'ok');
+      if (!document.getElementById('m-nome').value)   document.getElementById('m-nome').value   = d.full_name;
+      if (!document.getElementById('m-rua').value)    document.getElementById('m-rua').value    = d.street;
+      if (!document.getElementById('m-num').value)    document.getElementById('m-num').value    = d.house_number;
+      if (!document.getElementById('m-bairro').value) document.getElementById('m-bairro').value = d.neighborhood||'';
+      if (!document.getElementById('m-cidade').value) document.getElementById('m-cidade').value = d.city;
+      if (!document.getElementById('m-uf').value)     document.getElementById('m-uf').value     = d.state;
+      if (!document.getElementById('m-cep').value)    document.getElementById('m-cep').value    = d.zip_code;
+      if (!document.getElementById('m-phone').value && d.phone) document.getElementById('m-phone').value = d.phone;
+    }
+    setManualStatus('dados preenchidos ✓', 'ok');
+  } catch(err) {
+    setManualAlert('✗ ' + err.message + ' — preencha os campos manualmente.', 'err');
+    setManualStatus('', '');
+  } finally {
+    btn.innerHTML = '🔎 Buscar na Receita Federal';
+    btn.disabled = false;
+  }
+}
+
+function adicionarManual() {
+  const doc  = limpar(document.getElementById('m-doc').value);
+  const nome = document.getElementById('m-nome').value.trim();
+
+  if (!doc)  { setManualAlert('CPF/CNPJ é obrigatório.', 'err'); return; }
+  if (!nome) { setManualAlert('Nome completo é obrigatório.', 'err'); return; }
+  if (doc.length !== 11 && doc.length !== 14) {
+    setManualAlert('Documento inválido — CPF deve ter 11 dígitos, CNPJ 14.', 'err'); return;
+  }
+  if (S.rows.some(r => r.cnpj_cpf === doc)) {
+    setManualAlert('Este CPF/CNPJ já está na lista.', 'warn'); return;
+  }
+
+  const isCPF_fallback = doc.length === 11 && !document.getElementById('m-rua').value;
+
+  const novo = {
+    idx:          S.rows.length + 1,
+    cnpj_cpf:     doc,
+    full_name:    nome,
+    email:        document.getElementById('m-email').value.trim() || null,
+    phone:        limpar(document.getElementById('m-phone').value) || null,
+    zip_code:     fmtCEP(limpar(document.getElementById('m-cep').value)) || (isCPF_fallback ? '13054-709' : ''),
+    street:       document.getElementById('m-rua').value.trim()    || (isCPF_fallback ? 'R SERGIO FERNANDES BORGES SOARES' : null),
+    house_number: document.getElementById('m-num').value.trim()    || (isCPF_fallback ? '1000' : 'S/N'),
+    neighborhood: document.getElementById('m-bairro').value.trim() || null,
+    city:         document.getElementById('m-cidade').value.trim() || (isCPF_fallback ? 'CAMPINAS' : null),
+    state:        document.getElementById('m-uf').value.trim().toUpperCase() || (isCPF_fallback ? 'SP' : null),
+    _receita:     'ok',   // já consultado ou preenchido manualmente
+    _receita_msg: 'entrada manual',
+    _sap:         'pending',
+    _sap_msg:     '',
+    _addr_fallback: isCPF_fallback,
+  };
+
+  S.rows.push(novo);
+  S.empresa = document.getElementById('empresa-select').value;
+  document.getElementById('hdr-empresa').textContent = S.empresa;
+  document.getElementById('hdr-count').textContent = S.rows.length + ' BP' + (S.rows.length > 1 ? 's' : '');
+  document.getElementById('hdr-count').classList.remove('hidden');
+  document.getElementById('table-title').textContent = `BPs adicionados (${S.rows.length})`;
+
+  clearManualFields();
+  setManualAlert(`✓ <strong>${nome}</strong> adicionado à fila. Adicione mais ou vá para a lista.`, 'ok');
+
+  renderTable();
+  showPanels('panel-import','panel-table','panel-sap');
+  setStep(2);
+  document.getElementById('m-doc').focus();
+}
+
+// ═══════════════════════════════════════════════════════════
+// STEPS
+// ═══════════════════════════════════════════════════════════
+function setStep(n) {
+  for (let i=1;i<=4;i++){
+    const el = document.getElementById('step-'+i);
+    el.classList.remove('active','done');
+    const num = el.querySelector('.step-num');
+    if (i < n) { el.classList.add('done'); num.textContent='✓'; }
+    if (i===n) { el.classList.add('active'); num.textContent=String(i); }
+    if (i > n) { num.textContent=String(i); }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════════════
+function log(msg, type='') {
+  const el = document.getElementById('log');
+  const d = document.createElement('div');
+  d.className = 'log-line' + (type?' '+type:'');
+  const ts = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  d.textContent = `[${ts}] ${msg}`;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PANELS
+// ═══════════════════════════════════════════════════════════
+function showPanels(...ids) {
+  ['panel-import','panel-table','panel-sap'].forEach(id => {
+    document.getElementById(id).classList.toggle('hidden', !ids.includes(id));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// IMPORT
+// ═══════════════════════════════════════════════════════════
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type:'binary' });
+      const sn = wb.SheetNames.find(n => /cadastro|iflow/i.test(n)) || wb.SheetNames[0];
+      if (!sn) { alert('Nenhuma aba encontrada no arquivo.'); return; }
+
+      const data = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval:'' });
+      if (!data.length) { alert('Aba BPs_Cadastro está vazia.'); return; }
+
+      S.rows = data.map((r,i) => ({
+        idx:          i+1,
+        cnpj_cpf:     limpar(r.cnpj_cpf || r['CPF/CNPJ'] || r.cpf_cnpj || ''),
+        full_name:    String(r.full_name || r.Nome || '').trim(),
+        email:        String(r.email || r.Email || r['E-mail'] || '').trim() || null,
+        phone:        limpar(r.phone || r.Telefone || '') || null,
+        zip_code:     fmtCEP(limpar(r.zip_code || r.CEP || '')),
+        street:       String(r.street || r.Rua || r['Endereço'] || '').trim() || null,
+        house_number: String(r.house_number || r.Numero || r['Número'] || 'S/N').trim(),
+        neighborhood: String(r.neighborhood || r.Bairro || '').trim() || null,
+        city:         String(r.city || r.Cidade || '').trim() || null,
+        state:        String(r.state || r.UF || '').trim() || null,
+        _receita:     'pending',
+        _receita_msg: '',
+        _sap:         'pending',
+        _sap_msg:     '',
+        _addr_fallback: false,
+      }));
+
+      S.empresa = document.getElementById('empresa-select').value;
+      document.getElementById('hdr-empresa').textContent = S.empresa;
+      document.getElementById('hdr-count').textContent = S.rows.length + ' BPs';
+      document.getElementById('hdr-count').classList.remove('hidden');
+      document.getElementById('table-title').textContent = `BPs importados (${S.rows.length})`;
+
+      renderTable();
+      showPanels('panel-table','panel-sap');
+      setStep(2);
+    } catch(err) {
+      alert('Erro ao ler: '+err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER TABLE
+// ═══════════════════════════════════════════════════════════
+function renderTable() {
+  const tbody = document.getElementById('bp-tbody');
+  tbody.innerHTML = '';
+
+  if (!S.rows.length) {
+    tbody.innerHTML = '<tr><td colspan="14"><div class="empty-state"><span>📭</span>Nenhum BP</div></td></tr>';
+    return;
+  }
+
+  S.rows.forEach(row => {
+    const tr = document.createElement('tr');
+    const tipo = isCNPJ(row.cnpj_cpf) ? '<span class="sbadge sb-ok">PJ</span>' : '<span class="sbadge sb-pending">PF</span>';
+    const recBadge = {
+      pending: '<span class="sbadge sb-pending">— pend.</span>',
+      loading: '<span class="sbadge sb-loading"><span class="spin">⟳</span></span>',
+      ok:      '<span class="sbadge sb-ok">✓</span>',
+      error:   `<span class="sbadge sb-error" title="${row._receita_msg}">✗ erro</span>`,
+    }[row._receita] || '';
+    const sapBadge = {
+      pending: '<span class="sbadge sb-pending">—</span>',
+      loading: '<span class="sbadge sb-loading"><span class="spin">⟳</span></span>',
+      ok:      '<span class="sbadge sb-sap-ok">✓ criado</span>',
+      error:   `<span class="sbadge sb-sap-err" title="${row._sap_msg}">✗ erro</span>`,
+    }[row._sap] || '';
+
+    tr.innerHTML = `
+      <td style="color:var(--text-muted)">${row.idx}</td>
+      <td><span style="font-size:11px">${fmtDoc(row.cnpj_cpf)}</span></td>
+      <td title="${row.full_name}">${row.full_name}</td>
+      <td title="${row.email||''}">${row.email||'—'}</td>
+      <td>${row.phone||'—'}</td>
+      <td>${row.zip_code||'—'}</td>
+      <td title="${row.street||''}">${row.street||'—'}</td>
+      <td>${row.house_number||'S/N'}</td>
+      <td title="${row.neighborhood||''}">${row.neighborhood||'—'}</td>
+      <td title="${row.city||''}">${row.city||'—'}</td>
+      <td>${row.state||'—'}</td>
+      <td>${tipo}</td>
+      <td>${recBadge}</td>
+      <td>${sapBadge}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('stats-wrap').classList.remove('hidden');
+  document.getElementById('stat-total').textContent = S.rows.length;
+  document.getElementById('stat-ok').textContent    = S.rows.filter(r=>r._receita==='ok').length;
+  document.getElementById('stat-err').textContent   = S.rows.filter(r=>r._receita==='error').length;
+  document.getElementById('stat-pend').textContent  = S.rows.filter(r=>r._receita==='pending'||r._receita==='loading').length;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RECEITA — BrasilAPI
+// ═══════════════════════════════════════════════════════════
+async function consultarReceita(doc) {
+  const d = limpar(doc);
+  if (d.length === 14) {
+    const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${d}`);
+    if (!res.ok) throw new Error('CNPJ não encontrado (HTTP '+res.status+')');
+    const j = await res.json();
+    return {
+      full_name:    j.razao_social || '',
+      street:       j.logradouro   || '',
+      house_number: j.numero       || 'S/N',
+      neighborhood: j.bairro       || '',
+      city:         j.municipio    || '',
+      state:        j.uf           || '',
+      zip_code:     fmtCEP(limpar(j.cep||'')),
+      phone:        limpar(j.ddd_telefone_1||'') || null,
+      _cpf: false,
+    };
+  } else if (d.length === 11) {
+    // CPF — sem API pública; aplica endereço padrão V4
+    return {
+      street: 'R SERGIO FERNANDES BORGES SOARES',
+      house_number: '1000',
+      neighborhood: '',
+      city: 'CAMPINAS',
+      state: 'SP',
+      zip_code: '13054-709',
+      _cpf: true,
+    };
+  } else {
+    throw new Error('Documento inválido ('+d.length+' dígitos)');
+  }
+}
+
+async function validateAll() {
+  if (S.validating) return;
+  S.validating = true;
+  const btn = document.getElementById('btn-validate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⟳</span> Validando...';
+  document.getElementById('progress-outer').classList.remove('hidden');
+
+  const total = S.rows.length;
+  let done = 0;
+
+  for (const row of S.rows) {
+    row._receita = 'loading';
+    renderTable();
+    try {
+      const d = await consultarReceita(row.cnpj_cpf);
+      if (d._cpf) {
+        // CPF: endereço padrão só se campos vazios
+        if (!row.street)       row.street       = d.street;
+        if (!row.house_number || row.house_number==='S/N') row.house_number = d.house_number;
+        if (!row.city)         row.city         = d.city;
+        if (!row.state)        row.state        = d.state;
+        if (!row.zip_code || limpar(row.zip_code).length<8) row.zip_code = d.zip_code;
+        row._addr_fallback = true;
+        row._receita = 'ok';
+        log(`✓ #${row.idx} ${row.full_name} — CPF, endereço padrão V4 aplicado`, 'ok');
+      } else {
+        if (!row.full_name)    row.full_name    = d.full_name;
+        if (!row.street)       row.street       = d.street;
+        if (!row.house_number || row.house_number==='S/N') row.house_number = d.house_number;
+        if (!row.neighborhood) row.neighborhood = d.neighborhood;
+        if (!row.city)         row.city         = d.city;
+        if (!row.state)        row.state        = d.state;
+        if (!row.zip_code || limpar(row.zip_code).length<8) row.zip_code = d.zip_code;
+        if (!row.phone)        row.phone        = d.phone;
+        row._addr_fallback = false;
+        row._receita = 'ok';
+        log(`✓ #${row.idx} ${row.full_name} (${fmtDoc(row.cnpj_cpf)}) — validado`, 'ok');
+      }
+    } catch(err) {
+      row._receita = 'error';
+      row._receita_msg = err.message;
+      log(`✗ #${row.idx} ${row.full_name} — ${err.message}`, 'err');
+    }
+
+    done++;
+    document.getElementById('progress-fill').style.width = Math.round(done/total*100)+'%';
+    document.getElementById('progress-label').textContent = `${done} / ${total} concluídos`;
+    renderTable();
+    await sleep(350);
+  }
+
+  S.validating = false;
+  btn.disabled = false;
+  btn.innerHTML = '🔎 Revalidar';
+  setStep(3);
+
+  const ok  = S.rows.filter(r=>r._receita==='ok').length;
+  const err = S.rows.filter(r=>r._receita==='error').length;
+  log(`─── Validação concluída: ${ok} ok, ${err} com erro ───`, 'info');
+
+  refreshSapButton();
+}
+
+// ═══════════════════════════════════════════════════════════
+// API SAP
+// ═══════════════════════════════════════════════════════════
+function refreshSapButton() {
+  const btn = document.getElementById('btn-cadastrar');
+  const hasValidated = S.rows.some(r=>r._receita==='ok');
+  btn.disabled = !(S.apiOk && hasValidated);
+  document.getElementById('alert-no-api').classList.toggle('hidden', S.apiOk);
+  document.getElementById('alert-api-ok').classList.toggle('hidden', !S.apiOk);
+}
+
+async function testApi() {
+  const dot   = document.getElementById('api-status-dot');
+  const label = document.getElementById('api-status-label');
+  const btn   = document.getElementById('btn-test-api');
+
+  dot.style.background   = 'var(--yellow)';
+  label.style.color      = 'var(--text-muted)';
+  label.textContent      = 'verificando...';
+  btn.disabled           = true;
+
+  const healthUrl = S.apiUrl.replace('/cadastrar-bp', '/health');
+
+  try {
+    const res = await fetch(healthUrl, { method: 'GET' });
+    if (res.ok) {
+      S.apiOk              = true;
+      dot.style.background = 'var(--green)';
+      label.style.color    = 'var(--green)';
+      label.textContent    = '✓ SAP conectado — backend no ar';
+    } else {
+      throw new Error('HTTP ' + res.status);
+    }
+  } catch(err) {
+    S.apiOk              = false;
+    dot.style.background = 'var(--red)';
+    label.style.color    = 'var(--red)';
+    label.textContent    = '✗ sem conexão com o backend (' + err.message + ')';
+  } finally {
+    btn.disabled = false;
+    refreshSapButton();
+  }
+}
+
+async function cadastrarTodos() {
+  if (S.cadastrando) return;
+  S.cadastrando = true;
+  const btn = document.getElementById('btn-cadastrar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⟳</span> Cadastrando...';
+
+  const alvos = S.rows.filter(r => r._receita==='ok' && r._sap !== 'ok');
+
+  for (const row of alvos) {
+    row._sap = 'loading';
+    renderTable();
+
+    const payload = buildPayload(row);
+    try {
+      const res = await fetch(S.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(S.apiToken ? { 'Authorization': S.apiToken } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await res.json().catch(()=>({}));
+
+      if (res.ok) {
+        row._sap = 'ok';
+        row._sap_msg = body.bp_number || body.id || '';
+        log(`✓ SAP #${row.idx} ${row.full_name} — BP criado ${row._sap_msg}`, 'sap');
+      } else {
+        throw new Error(body.message || body.error || 'HTTP '+res.status);
+      }
+    } catch(err) {
+      row._sap = 'error';
+      row._sap_msg = err.message;
+      log(`✗ SAP #${row.idx} ${row.full_name} — ${err.message}`, 'err');
+    }
+
+    renderTable();
+    await sleep(300);
+  }
+
+  S.cadastrando = false;
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Cadastrar todos no SAP';
+  setStep(4);
+
+  const ok  = S.rows.filter(r=>r._sap==='ok').length;
+  const err = S.rows.filter(r=>r._sap==='error').length;
+  log(`─── SAP concluído: ${ok} criados, ${err} com erro ───`, 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPORT CSV
+// ═══════════════════════════════════════════════════════════
+function exportCSV() {
+  const headers = [
+    'idx','cnpj_cpf','full_name','first_name','last_name',
+    'email','phone_full','zip_code','street','house_number',
+    'neighborhood','city','state','country',
+    'sap_category','sap_tax_type','company_code',
+    'address_is_fallback','status_receita','status_sap','obs_sap',
+  ];
+
+  const rows = S.rows.map(r => {
+    const { first_name, last_name } = splitName(r.full_name);
+    const meta = sapMeta(r.cnpj_cpf);
+    return [
+      r.idx, r.cnpj_cpf, r.full_name, first_name, last_name||'',
+      r.email||'', r.phone||'', r.zip_code||'', r.street||'', r.house_number||'S/N',
+      r.neighborhood||'', r.city||'', r.state||'', 'BR',
+      meta.sap_category||'', meta.sap_tax_type||'', S.empresa,
+      r._addr_fallback?'true':'false', r._receita, r._sap, r._sap_msg||'',
+    ];
+  });
+
+  const csv = [headers, ...rows]
+    .map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob(['\uFEFF'+csv], { type:'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cadastro-bps-v4-${today()}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log(`CSV exportado: cadastro-bps-v4-${today()}.csv`, 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════════════════════
+function resetAll() {
+  S.rows = []; S.validating = false; S.cadastrando = false;
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-label').textContent = '';
+  document.getElementById('hdr-count').classList.add('hidden');
+  document.getElementById('file-input').value = '';
+  document.getElementById('progress-outer').classList.add('hidden');
+  document.getElementById('stats-wrap').classList.add('hidden');
+  showPanels('panel-import');
+  setStep(1);
+}
+
+// ═══════════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════════
+document.getElementById('file-input').addEventListener('change', e => handleFile(e.target.files[0]));
+
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  handleFile(e.dataTransfer.files[0]);
+});
+
+document.getElementById('btn-validate').addEventListener('click', validateAll);
+document.getElementById('btn-reset').addEventListener('click', resetAll);
+document.getElementById('btn-new').addEventListener('click', resetAll);
+document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
+document.getElementById('btn-cadastrar').addEventListener('click', cadastrarTodos);
+document.getElementById('btn-test-api').addEventListener('click', testApi);
+
+document.getElementById('empresa-select').addEventListener('change', e => {
+  S.empresa = e.target.value;
+  document.getElementById('hdr-empresa').textContent = S.empresa;
+});
+
+
+
+document.getElementById('btn-modelo').addEventListener('click', downloadModelo);
+
+// ═══════════════════════════════════════════════════════════
+// DOWNLOAD PLANILHA MODELO
+// ═══════════════════════════════════════════════════════════
+function downloadModelo() {
+  const wb = XLSX.utils.book_new();
+
+  // ── Aba BPs_Cadastro ───────────────────────────────────
+  const headers = [
+    'cnpj_cpf', 'full_name', 'email', 'phone',
+    'zip_code', 'street', 'house_number', 'neighborhood',
+    'city', 'state',
+  ];
+
+  const exemplos = [
+    // CNPJ — campos preenchidos
+    ['12345678000195', 'EMPRESA EXEMPLO LTDA', 'financeiro@empresa.com.br', '1199887766',
+     '01310-100', 'AV PAULISTA', '1000', 'BELA VISTA', 'SAO PAULO', 'SP'],
+    // CNPJ — campos parcialmente preenchidos (BrasilAPI preenche o resto)
+    ['98765432000111', 'OUTRA EMPRESA SA', 'contato@outra.com.br', '',
+     '', '', '', '', '', ''],
+    // CPF — endereço preenchido
+    ['12345678901', 'JOAO DA SILVA', 'joao@email.com', '11988776655',
+     '13054-709', 'R SERGIO FERNANDES BORGES SOARES', '1000', '', 'CAMPINAS', 'SP'],
+    // CPF — sem endereço (ferramenta aplica padrão V4 automaticamente)
+    ['98765432100', 'MARIA SOUZA', 'maria@email.com', '',
+     '', '', '', '', '', ''],
+  ];
+
+  const wsData = [headers, ...exemplos];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  ws['!cols'] = [
+    { wch: 18 }, { wch: 35 }, { wch: 30 }, { wch: 14 },
+    { wch: 12 }, { wch: 35 }, { wch: 10 }, { wch: 18 },
+    { wch: 20 }, { wch: 5  },
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'BPs_Cadastro');
+
+  // ── Aba Instruções ─────────────────────────────────────
+  const instrData = [
+    ['INSTRUÇÕES — Cadastro de BPs | V4 Company'],
+    [''],
+    ['Campo',         'Obrigatório', 'Formato',                  'Observação'],
+    ['cnpj_cpf',      'SIM',         'Só números',               'CPF: 11 dígitos | CNPJ: 14 dígitos — sem pontos, traços ou barras'],
+    ['full_name',     'SIM',         'Texto livre',              'Razão social ou nome completo da pessoa'],
+    ['email',         'Recomendado', 'email@dominio.com',        'Pode ficar vazio — ferramenta não bloqueia'],
+    ['phone',         'Opcional',    'Só números',               'DDD + número, sem formatação'],
+    ['zip_code',      'Opcional',    '00000-000 ou 00000000',    'Para CNPJ: se vazio, Receita Federal preenche. Para CPF vazio: endereço padrão V4'],
+    ['street',        'Opcional',    'Texto',                    'Para CNPJ: se vazio, Receita Federal preenche'],
+    ['house_number',  'Opcional',    'Texto',                    'Padrão S/N se não informado'],
+    ['neighborhood',  'Opcional',    'Texto',                    'Bairro'],
+    ['city',          'Opcional',    'Texto',                    'Para CNPJ: se vazio, Receita Federal preenche'],
+    ['state',         'Opcional',    'UF — 2 letras',            'Ex: SP, RJ, MG'],
+    [''],
+    ['REGRAS IMPORTANTES'],
+    ['', '1. O cabeçalho DEVE estar na linha 1 — não adicione linhas antes dos títulos'],
+    ['', '2. Remova as linhas de exemplo antes de importar'],
+    ['', '3. cnpj_cpf deve conter APENAS números — formatos como 12.345.678/0001-95 são aceitos mas os símbolos serão removidos'],
+    ['', '4. Para CNPJs: deixe campos de endereço vazios e a ferramenta buscará automaticamente na Receita Federal'],
+    ['', '5. Para CPFs sem endereço: a ferramenta aplica o endereço padrão V4 (Campinas/SP)'],
+    ['', '6. A aba deve se chamar "BPs_Cadastro" — este é o nome que a ferramenta busca'],
+  ];
+
+  const wsInstr = XLSX.utils.aoa_to_sheet(instrData);
+  wsInstr['!cols'] = [{ wch: 16 }, { wch: 14 }, { wch: 22 }, { wch: 65 }];
+  XLSX.utils.book_append_sheet(wb, wsInstr, 'Instruções');
+
+  XLSX.writeFile(wb, 'modelo_BPs_Cadastro_V4.xlsx');
+}
+
+// Init
+showPanels('panel-import');
+setStep(1);
+testApi();
+</script>
+</body>
+</html>

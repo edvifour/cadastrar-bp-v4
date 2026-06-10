@@ -948,12 +948,14 @@ function renderTable() {
       ok:      '<span class="sbadge sb-ok">✓</span>',
       error:   `<span class="sbadge sb-error" title="${row._receita_msg}">✗ erro</span>`,
     }[row._receita] || '';
-    const sapBadge = {
-      pending: '<span class="sbadge sb-pending">—</span>',
-      loading: '<span class="sbadge sb-loading"><span class="spin">⟳</span></span>',
-      ok:      '<span class="sbadge sb-sap-ok">✓ criado</span>',
-      error:   `<span class="sbadge sb-sap-err" title="${row._sap_msg}">✗ erro</span>`,
-    }[row._sap] || '';
+    const sapBadgeMap = {
+      pending:   '<span class="sbadge sb-pending">—</span>',
+      loading:   '<span class="sbadge sb-loading"><span class="spin">⟳</span></span>',
+      ok:        '<span class="sbadge sb-sap-ok">✓ criado</span>',
+      duplicate: `<span class="sbadge sb-pending" title="${row._sap_msg}" style="color:var(--yellow);border-color:rgba(255,192,42,.3);">⚠ já existe</span>`,
+      error:     `<span class="sbadge sb-sap-err" title="${row._sap_msg}">✗ erro</span>`,
+    };
+    const sapBadge = sapBadgeMap[row._sap] || '';
 
     tr.innerHTML = `
       <td style="color:var(--text-muted)">${row.idx}</td>
@@ -1177,6 +1179,11 @@ async function cadastrarTodos() {
         row._sap = 'ok';
         row._sap_msg = body.bp_number || body.id || '';
         log(`✓ SAP #${row.idx} ${row.full_name} — BP criado ${row._sap_msg}`, 'sap');
+      } else if (res.status === 409) {
+        // Duplicidade — não é erro, é informação
+        row._sap = 'duplicate';
+        row._sap_msg = body.message || 'Já cadastrado';
+        log(`⚠ SAP #${row.idx} ${row.full_name} — ${row._sap_msg}`, '');
       } else {
         throw new Error(body.message || body.error || 'HTTP '+res.status);
       }

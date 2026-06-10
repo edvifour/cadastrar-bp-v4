@@ -581,8 +581,8 @@ function isCPF(doc)  { return limpar(doc).length === 11; }
 
 // ─── Derivar sap_category e sap_tax_type ────────────────
 function sapMeta(doc) {
-  if (isCNPJ(doc)) return { sap_category: 'J', sap_tax_type: 'BR3' };  // Pessoa Jurídica
-  if (isCPF(doc))  return { sap_category: 'F', sap_tax_type: 'BR1' };  // Pessoa Física
+  if (isCNPJ(doc)) return { sap_category: 'J', sap_tax_type: 'BR1' };  // Pessoa Jurídica — BR1 conforme VBA
+  if (isCPF(doc))  return { sap_category: 'F', sap_tax_type: 'BR2' };  // Pessoa Física — BR2 conforme VBA
   return { sap_category: null, sap_tax_type: null };
 }
 
@@ -599,7 +599,7 @@ function splitName(full) {
 function buildPayload(row) {
   const doc     = limpar(row.cnpj_cpf);
   const isCNPJ  = doc.length === 14;
-  const taxType = isCNPJ ? 'BR3' : 'BR1';
+  const taxType = isCNPJ ? 'BR1' : 'BR2';  // BR1=CNPJ, BR2=CPF conforme VBA
   const phone   = row.phone ? '+55' + limpar(row.phone) : null;
   const cep     = fmtCEP(limpar(row.zip_code || ''));  // formato XXXXX-XXX exigido pelo SAP
   const taxJur  = (row._ibge && row.state) ? (row.state + ' ' + row._ibge) : '';
